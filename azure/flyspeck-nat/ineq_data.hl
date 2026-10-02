@@ -1,5 +1,5 @@
 let read_cases fname first last =
-  let ic = Pervasives.open_in fname in
+  let ic = Stdlib.open_in fname in
   let split = Str.regexp ":" in
   let rec read acc =
     try

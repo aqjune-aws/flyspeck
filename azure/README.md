@@ -1,84 +1,139 @@
-Compiled HOL Light and FormalIneqs
-==================================
+Verification of the Flyspeck nonlinear inequalities
+===================================================
 
-##Build
+`native_verifier` proves the Flyspeck nonlinear inequalities with HOL Light's
+`Formal_ineqs` and prints the md5 digest of each theorem it obtains. Those
+digests are what `text_formalization/general/serialization.hl` checks when
+`nonlinear/mk_all_ineq.hl` imports the inequalities, so a complete run of this
+directory is what lets that file discharge `the_nonlinear_inequalities`.
 
-Requirements: 
+## Build
 
-- [OCaml](http://ocaml.org/) with a native compiler (do
-not forget `make opt` if you are building from source code)
+Requirements:
 
-- [Camlp5](http://camlp5.gforge.inria.fr/)
+- a HOL Light tree built with `HOLLIGHT_USE_MODULE=1`, which is what produces
+  the `hol_lib.cmxa` this links against:
 
-- [GNU parallel](http://www.gnu.org/software/parallel/) (for the parallel
-verification of inequalities).
+      make -C /path/to/hol-light HOLLIGHT_USE_MODULE=1
 
-(Tested with OCaml 4.01 and Camlp5 6.11).
+- GNU parallel, for the parallel verification below.
 
-    make parser
-    make hol-core
-    make hol-lib
-    make ineq
-    make flyspeck
-    make build
+- the OCaml toolchain HOL Light was built with, on the PATH, with `ocamlfind`
+  and the `zarith`, `unix` and `str` packages. For a HOL Light with its own opam
+  switch:
 
-##Performance Test
+      eval $(opam env --switch /path/to/hol-light --set-switch)
 
-    make test_flyspeck
-    ./test_flyspeck
+Then:
 
-##Verification of Individual Inequalities
+    make HOLLIGHT_DIR=/path/to/hol-light
 
-    ./verifier data_file a b > out.txt
+The build folds the loads of `native_verifier.ml` into a single compilation unit
+with `hol.sh inline-load`, compiles that against `hol_lib.cmxa` with
+`hol.sh compile`, and links it with `ocamlfind`. The result, `./native_verifier`,
+needs only a system `libgmp` at run time.
 
-`data_file` is a file with inequalities.
-`a` is the first case (inequality) for the verification, 
-`b` is the last case (inequality) for the verification. 
+## Verification of individual inequalities
 
-Example:
+Which cases to verify, and which file to read them from, come from the
+environment variables:
 
-    ./verifier results/ineqs/ineqs2_trig.txt 0 13 > out.txt
+| variable         | meaning                          | default      |
+| ---------------- | -------------------------------- | ------------ |
+| `FLYSPECK_INEQS` | data file of inequalities        | `ineqs.txt`  |
+| `FLYSPECK_FIRST` | first case, counting from 0      | `0`          |
+| `FLYSPECK_LAST`  | last case                        | `0`          |
 
-##Parallel Verification of All Strict Inequalities
+For example:
 
-    ./run-parallel 120
+    FLYSPECK_INEQS=results/ineqs/ineqs2_trig.txt FLYSPECK_FIRST=0 \
+      FLYSPECK_LAST=13 ./native_verifier > out.txt
 
-Here, 120 is the number of parallel jobs. The script uses GNU parallel
-to execute several independent copies of `verifier`
-simultaneously. The data file with inequalities is `ineqs.txt`. Other
-parameters are taken from the file `pars.txt`. All results are saved
-in the directory `out`.
+Case 0 of `ineqs.txt` takes 150 s on a Neoverse-V2 core, and a process spends
+about 340 s building the base 200 arithmetic tables before it starts on any
+case. Peak resident size is around 1.2 GB.
 
-##Verification of Sharp Inequalities
+## Parallel verification of all strict inequalities
 
-    make sharp
-    ./sharp_verifier > out_sharp.txt
+    ./run-parallel 64
 
-##FormalIneqs Source Update
+The argument is the number of concurrent jobs.
+`run-parallel` hands GNU parallel the 609 case
+ranges of `pars.txt`, which between them cover `ineqs.txt`, and collects the
+output under `out/`, one directory per range.
 
-    cd scripts
-    ocaml create_native_formal_ineqs.ml
+Choose the number of jobs for memory rather than for cores: a process usually
+needs about 1.2 GB, and a range of hard cases needs more, which is why
+`run-parallel` passes `--memfree` as well.
 
-##Verification of all Flyspeck Nonlinear Inequalities
+Any further argument goes to GNU parallel.  Ranges that finish are recorded in
+`run-parallel.joblog`, so an interrupted run continues with
 
-    rm -rf out
-    ./run-parallel 120
-    make sharp
-    ./sharp_verifier > out_sharp.txt
-    find out -type f ! -regex ".*/\..*" -exec grep "Hash" '{}' \; | sort -V | sed -e 's/.*Hash  //' -e 's/^.*,(/(/' > hashes.txt
-    grep "Hash" out_sharp.txt | sed -e 's/.*Hash  //' -e 's/^.*,(/(/' >> hashes.txt
+    ./run-parallel 64 --resume
 
-The result of these commands is the file `hashes.txt` which contains
-hashes of theorems for all Flyspeck nonlinear inequalities.
+## Collecting the digests
 
-##Import of Flyspeck Nonlinear Inequalities into the project
+From the `out/` dir, all hashes must be collected and stored at `hashes.txt`:
 
-After verification, the list of md5 hashes in `hashes.txt` coincides with list of hashes in general/theorem_nonlinear_digest.hl.
+    find out -type f ! -regex ".*/\..*" -exec grep "Hash" '{}' \; \
+      | sort -V | sed -e 's/.*Hash  //' -e 's/^.*,(/(/' > hashes.txt
 
-To check that the two lists of md5 hashes agree: 
+Each line of the result pairs a case with the md5 digest of its theorem.
 
-     cat azure/results/hashes.txt | sed -e 's/^.*: *//' | sort > hash1.txt
-     cat text_formalization/general/theorem_nonlinear_digest.hl | grep -F '"' | sed -e 's/^.*:", *"//' -e 's/".*$//' | sort > hash2.txt
-     md5 hash1.txt hash2.txt
+## The sharp inequalities
 
+Five of the nonlinear inequalities are sharp: they hold with equality somewhere
+on their domain, so the interval arithmetic that settles the other 23237 cannot
+settle them.  They are not in `ineqs.txt`, which is why `results/hashes.txt`
+holds 23242 entries against that file's 23237 cases:
 
+    (prep-GRKIBMP B V2,0)
+    (prep-OMKYNLT 3336871894,0)
+    (prep-QZECFIC wt0 corner,0)
+    (prep-TSKAJXY-IYOUOBF sharp v2,0)
+    (prep-TSKAJXY-RIBCYXU sharp,0)
+
+`theorem_nonlinear_digest.hl` has to cover these five as well, so a `hashes.txt`
+built from `out/` alone is five lines short, and a digest list regenerated from
+it would leave `mk_all_ineq.hl` unable to import them.
+
+`flyspeck-nat/sharp_theorems.hl` shows the exact equality that each of the five
+needs, and `flyspeck-nat/sharp_ineqs.hl` is a script of one block per case that
+verifies it and prints `Hash <name>: <md5>` as it loads.  Nothing builds those
+two files.  Covering them takes:
+
+- dropping `open Sharp_theorems;;` from `sharp_ineqs.hl`.  It names the module
+  that separate compilation gave the file, and these files load into a single
+  scope, so there is nothing left for it to bring in.  Every other open there is
+  either a Formal_ineqs module or comes from `compat.ml` and the driver.
+
+- a second driver beside `native_verifier.ml` that loads the same prelude and
+  then those two files, with a Makefile target to inline-load, compile and link
+  it.
+
+- one run of the result - five cases in a single process rather than a parallel
+  job - with its digests appended:
+
+      grep "Hash" out_sharp.txt | sed -e 's/.*Hash  //' -e 's/^.*,(/(/' \
+        >> hashes.txt
+
+## Comparing with the digests held in the project
+
+    cat hashes.txt | sed -e 's/^.*: *//' | sort > hash1.txt
+    cat ../text_formalization/general/theorem_nonlinear_digest.hl \
+      | grep -F '"' | sed -e 's/^.*:", *"//' -e 's/".*$//' | sort > hash2.txt
+    md5sum hash1.txt hash2.txt
+
+`results/hashes.txt`, from the 2014 run, agrees with
+`theorem_nonlinear_digest.hl` this way. A fresh run does not reproduce either of
+them, because a digest covers the entire definitional history of its theorem and
+HOL Light commit a84e0f3 replaced `define_finite_type` with `tybit0`/`tybit1`,
+changing the history of everything that mentions `real^N`. Regenerating
+`theorem_nonlinear_digest.hl` from a fresh `hashes.txt` is the point of running
+this directory.
+
+## Files that nothing builds
+
+- `flyspeck-nat/sharp_theorems.hl` and `flyspeck-nat/sharp_ineqs.hl`; see above.
+- `main_verifier.hl` and `config.ml`, which `native_verifier.ml` supersedes.
+- `test_flyspeck.hl`, a performance test.

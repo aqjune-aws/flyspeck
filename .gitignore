@@ -1,7 +1,16 @@
 .DS_Store
 \#*\#
 *~
+*.swp
+*.swo
 *.cmo
 *.cmi
 *.o
 *.cmx
+
+# Products of azure/Makefile
+/azure/native_verifier
+/azure/native_verifier_raw.ml
+/azure/native_verifier_inlined.ml
+/azure/out/
+/azure/run-parallel.joblog

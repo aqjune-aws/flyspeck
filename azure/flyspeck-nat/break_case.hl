@@ -1,5 +1,4 @@
 open Hol_core
-open Misc
 open Prove_by_refinement
 open Definitions
 

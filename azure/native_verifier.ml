@@ -1,0 +1,147 @@
+(* ========================================================================= *)
+(* Verification of the Flyspeck nonlinear inequalities, and of the md5 digest  *)
+(* of each resulting theorem, against the HOL Light in HOLLIGHT_DIR.          *)
+(*                                                                          *)
+(* The inequalities come from a data file in the format of azure/ineqs.txt;   *)
+(* which cases to do, and where to read them from, are taken from the         *)
+(* environment so that the same file works under the toplevel and as a        *)
+(* natively compiled binary:                                                 *)
+(*                                                                          *)
+(*   FLYSPECK_INEQS  data file          (default "ineqs.txt")                 *)
+(*   FLYSPECK_FIRST  first case, 0 based (default 0)                         *)
+(*   FLYSPECK_LAST   last case                                               *)
+(*                                                                          *)
+(* Interpreted, from this directory:                                         *)
+(*                                                                          *)
+(*   FLYSPECK_LAST=2 LINE_EDITOR=env $HOLLIGHT_DIR/hol.sh                     *)
+(*     <<< 'loadt "native_verifier.ml";;'                                     *)
+(*                                                                          *)
+(* Compiled: see Makefile.native, which inlines the loads with                *)
+(* "hol.sh inline-load" and then compiles and links the result.  Only literal *)
+(* needs/loadt statements on a line of their own are inlined, so the loads     *)
+(* below are written that way.                                               *)
+(*                                                                          *)
+(* One line of the output per case has the shape azure/README.md expects:      *)
+(*                                                                          *)
+(*   Hash  <n>,(<name>): <md5>                                               *)
+(* ========================================================================= *)
+
+(* The base of natural number arithmetic has to be set before the verification
+   libraries build their arithmetic tables. *)
+
+needs "Formal_ineqs/arith_options.hl";;
+Arith_options.base := 200;;
+needs "Formal_ineqs/verifier/m_verifier_main.hl";;
+needs "Formal_ineqs/verifier_options.hl";;
+Verifier_options.info_print_level := 1;;
+
+loadt "compat.ml";;
+
+loadt "flyspeck-nat/prove_by_refinement.hl";;
+module Prove_by_refinement = struct
+  let prove_by_refinement = prove_by_refinement
+end;;
+
+loadt "flyspeck-nat/definitions.hl";;
+module Definitions = struct
+  let ineq = ineq
+  let flyspeck_defs = flyspeck_defs
+  let h0 = h0
+  let hminus = hminus
+  let hplus = hplus
+  let lmfun = lmfun
+  let marchal_quartic = marchal_quartic
+end;;
+
+loadt "flyspeck-nat/serialization.hl";;
+module Serialization = struct
+  let full_digest_thm = full_digest_thm
+end;;
+
+loadt "flyspeck-nat/break_case.hl";;
+module Break_case = struct
+  let ineqm_conv = ineqm_conv
+end;;
+
+loadt "flyspeck-nat/hminus.hl";;
+
+loadt "flyspeck-nat/ineq_data.hl";;
+module Ineq_data = struct
+  let get_ineqs = get_ineqs
+end;;
+
+open M_verifier_main;;
+
+(* ------------------------------------------------------------------------- *)
+(* Configuration.                                                            *)
+(* ------------------------------------------------------------------------- *)
+
+let env_or k d = try Sys.getenv k with Not_found -> d;;
+
+let data_file = env_or "FLYSPECK_INEQS" "ineqs.txt";;
+let first_case = int_of_string (env_or "FLYSPECK_FIRST" "0");;
+let last_case = int_of_string (env_or "FLYSPECK_LAST" "0");;
+
+(* ------------------------------------------------------------------------- *)
+(* Verification of one inequality.                                           *)
+(* ------------------------------------------------------------------------- *)
+
+let verify_flyspeck_ineq pp ineq_tm =
+  let conv = REWRITE_CONV[TAUT `(P ==> Q) <=> (~P \/ Q)`;
+                          REAL_ARITH `~(a > b:real) <=> a <= b`;
+                          REAL_ARITH `~(a < b:real) <=> b <= a`;
+                          REAL_ARITH `~(a >= b:real) <=> a < b`;
+                          REAL_ARITH `~(a <= b:real) <=> b < a`]
+                THENC REWRITE_CONV ([Definitions.ineq; IMP_IMP;
+                                     REAL_MUL_LZERO; REAL_MUL_RZERO] @
+                                      Definitions.flyspeck_defs)
+                THENC DEPTH_CONV let_CONV in
+  let eq_th = conv ineq_tm in
+  let ineq_tm1 = (rand o concl) eq_th in
+  let th, time = verify_ineq {default_params with eps = 1e-10} pp ineq_tm1 in
+  let th2 =
+    try
+      let th1 = SPEC_ALL th in
+      let imp_tm = mk_imp (concl th1, ineq_tm1) in
+      let imp_th = TAUT imp_tm in
+        MP imp_th th1
+    with _ ->
+      let _ = print_endline "WARNING: INEXACT" in
+        SPEC_ALL th in
+    REWRITE_RULE[GSYM eq_th] th2, time;;
+
+let verify (case, id, eq_th) =
+  let _ = print_endline (Printf.sprintf "Verifying: %d: %s" case id) in
+    try
+      let ineq = (rand o concl) eq_th in
+      let th0, time = verify_flyspeck_ineq 6 ineq in
+      let th = (SPEC_ALL o REWRITE_RULE[GSYM eq_th]) th0 in
+      let th_str = string_of_thm th in
+      let hash = Serialization.full_digest_thm th in
+      let str = Printf.sprintf "\nTheorem %s: %s\nTime %s: %f\nHash %s: %s\n"
+        id th_str id time.total_time id hash in
+        print_endline str;
+        Gc.compact()
+    with
+      | Failure msg -> print_endline (Printf.sprintf "FAILURE %s: %s" id msg)
+      | _ -> print_endline (Printf.sprintf "ERROR %s" id);;
+
+(* ------------------------------------------------------------------------- *)
+(* Main.                                                                     *)
+(* ------------------------------------------------------------------------- *)
+
+let verify_all () =
+  let _ = print_endline
+    (Printf.sprintf "Verifying cases: %d -- %d of %s"
+       first_case last_case data_file) in
+  let cases = Ineq_data.get_ineqs data_file first_case last_case in
+  let _ = print_endline "Cases loaded" in
+  let cases_eq_ths = map (fun (i, id, tm) ->
+                            i, id, Break_case.ineqm_conv tm) cases in
+  let _ = print_endline "Cases processed" in
+  let _ = map verify cases_eq_ths in
+    print_endline
+      (Printf.sprintf "Verification of cases %d -- %d finished"
+         first_case last_case);;
+
+verify_all();;

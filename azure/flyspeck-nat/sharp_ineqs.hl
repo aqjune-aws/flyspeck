@@ -1,6 +1,5 @@
 open Hol_core;;
 open Vectors;;
-open Topology;;
 open Misc_functions;;
 open Ssrbool;;
 open Multivariate_taylor;;

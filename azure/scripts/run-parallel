@@ -1,3 +1,0 @@
-#!/bin/bash
-
-parallel --jobs $1 --result out --colsep ',' ../verifier ../results/ineqs/ineqs1.txt :::: par.txt

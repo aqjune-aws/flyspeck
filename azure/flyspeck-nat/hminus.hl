@@ -2,7 +2,6 @@
 (* hminus ~ 1.2317544220903043901 *)
 
 open Hol_core;;
-open Realanalysis;;
 open M_verifier_main;;
 open Ssrfun;;
 open Interval_arith;;
