@@ -23,9 +23,8 @@
    if mem path !load_path then ()
    else load_path := path :: !load_path;;
 
-   map add_to_load_path 
+   map add_to_load_path
    [flyspeck_dir;
-   (Filename.concat flyspeck_dir "../formal_ineqs");
    (Filename.concat flyspeck_dir "../jHOLLight/")
    ];;
 

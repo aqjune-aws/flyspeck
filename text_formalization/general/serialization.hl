@@ -17,11 +17,6 @@ needs "general/theorem_digest.hl";;
 needs "general/theorem_nonlinear_digest.hl";;
 needs "general/prove_by_refinement.hl";;
 
-let _ = if Str.string_match (Str.regexp "Ocaml 4.") (ocaml_version()) 0 then 
-  needs "general/update_database_400.ml"
-else
-  needs "general/update_database_310.ml";;
-
 (* #load "str.cma";; *)
 
 module Serialization = struct
@@ -169,15 +164,28 @@ let table_stray_typ =
  ("nadd","mk_nadd","dest_nadd"), (nadd_abs,nadd_rep)
   ];;
 
-let process_inductive_term = 
-  let reg = Str.split (Str.regexp "[ |=]+") in
+(* In: one entry of the_inductive_types, namely the specification string of an
+   inductive type together with that type's induction and recursion theorems.
+   Out: the names involved in the declaration - its constructors, the types
+   named as constructor arguments, and the two bijection constants - each paired
+   with the theorem that accounts for it.  get_simple_table_term builds its
+   table from these, because the history walk behind full_digest_thm needs a
+   theorem for every constant it meets, and what accounts for a constructor is
+   its type's induction and recursion pair rather than a definition of its own.
+*)
+let process_inductive_term : string * (thm * thm) -> (string * thm) list =
+  let split_names = Str.split (Str.regexp "[ |=(),]+") in
   let ignores = ["A";"B";"bool"] in
-    fun tint ->
-      let rs =  (tl o reg) (fst tint) in
-      let rs1 = subtract rs ignores  in
-      let (u,v) = snd tint in
-      let zz2 = map (fun t -> (t, (CONJ u v))) rs1 in
-    zz2;;
+    fun (spec, (induct_th, recursion_th)) ->
+      let names = split_names spec in
+      let tyname = hd names in
+      let others = subtract (tl names) ignores in
+      let accounting_th = CONJ induct_th recursion_th in
+      (* The two constants that define_inductive_type creates with
+          new_basic_type_definition - "_mk_"^ty and "_dest_"^ty - are added here
+          too. *)
+      map (fun name -> (name, accounting_th))
+        (("_mk_"^tyname) :: ("_dest_"^tyname) :: others);;
 
 (*
 let table_inductive_term = map process_inductive_term !the_inductive_types;;

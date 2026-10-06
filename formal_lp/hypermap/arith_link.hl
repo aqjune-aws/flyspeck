@@ -1,12 +1,8 @@
-let add_to_load_path path =
-  if mem path !load_path then ()
-  else load_path := path :: !load_path;;
+(* The arithmetic comes from the Formal_ineqs of the HOL Light being built
+   against, which is on the load path already. *)
 
-let formal_ineqs_dir = flyspeck_dir ^ "/../formal_ineqs";;
-add_to_load_path formal_ineqs_dir;;
-
-needs "arith_options.hl";;
+needs "Formal_ineqs/arith_options.hl";;
 Arith_options.base := 200;;
 Arith_options.cached := true;;
 
-needs "arith/arith_nat.hl";;
+needs "Formal_ineqs/arith/arith_nat.hl";;

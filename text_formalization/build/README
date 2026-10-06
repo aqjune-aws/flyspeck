@@ -7,6 +7,9 @@ strictbuild.hl: called by ocamlinit_hol_light.ml.
 
 build.hl: List of project files used by strictbuild.hl.
 
-checkpoint_flyspeck, restart_flyspeck, boot.ml, boot.hl: used for checkpointing the project.
+checkpoint_flyspeck: builds a HOL Light image with the build sequence already
+    loaded, through the make-checkpoint.sh of HOL Light.
+
+use_serialization.hl: read by strictbuild.hl when FLYSPECK_SERIALIZATION is set.
 
 

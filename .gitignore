@@ -21,3 +21,7 @@
 /azure/out_sharp.txt
 /azure/run-parallel*.joblog
 /azure/pars-resume.txt
+
+# Default output of text_formalization/build/checkpoint_flyspeck
+/flyspeck-checkpoint
+/flyspeck-checkpoint.ckpt/

@@ -5,7 +5,7 @@
 (* =========================================================== *)
 
 needs "../formal_lp/hypermap/arith_link.hl";;
-needs "misc/misc_vars.hl";;
+needs "Formal_ineqs/misc/misc_vars.hl";;
 needs "Examples/seq-compiled.hl";;
 
 module type List_conversions_sig =

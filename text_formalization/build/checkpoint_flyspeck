@@ -1,14 +1,63 @@
 #!/bin/bash
-FLYSPECK_SOURCE=`readlink --canonicalize --no-newline $BASH_SOURCE`
-FLYSPECK_DIR=`dirname $FLYSPECK_SOURCE`
-cd $FLYSPECK_DIR
 
+# Build a HOL Light image with the Flyspeck build sequence already loaded,
+# using the make-checkpoint.sh of the HOL Light named by HOLLIGHT_DIR.  That
+# script writes <image> as a shell script which restores the session, so
+# reloading the sequence costs seconds rather than the best part of an hour.
+#
+#   HOLLIGHT_DIR=/path/to/hol-light ./checkpoint_flyspeck [image] [sequence]
+#
+# <image> defaults to flyspeck-checkpoint beside the flyspeck directory, and
+# <sequence> to build_sequence_main_statement.  Pass build_sequence_full for
+# the linear programming block as well, which runs the linear programs.
+#
+# dmtcp_launch and dmtcp_command have to be on the PATH; see
+# https://github.com/dmtcp/dmtcp .
+#
+# Two things make the difference between an image that works and one that is
+# only a few megabytes of shell:
+#
+#  - make-checkpoint.sh checkpoints as soon as its init statement has run, and
+#    what it checkpoints has to still be alive.  hol.sh ends in a toplevel
+#    reading stdin, which exits at end of file, so stdin is held open by a
+#    fifo for the duration.
+#
+#  - LINE_EDITOR keeps hol.sh from running the toplevel under ledit, which
+#    would otherwise stand between dmtcp and the process worth saving.
+
+set -e
+
+FLYSPECK_SOURCE=$(readlink --canonicalize --no-newline "$BASH_SOURCE")
+FLYSPECK_BUILD_DIR=$(dirname "$FLYSPECK_SOURCE")
+FLYSPECK_DIR=$(dirname "$FLYSPECK_BUILD_DIR")
 export FLYSPECK_DIR
 
-#requires:
-# ocaml=3.10.0
-# dmtcp 
-mkdir -p ~/bin
-ln -f -s `pwd`/restart_flyspeck ~/bin/hol_light
-ocamlmktop unix.cma str.cma nums.cma -o ocampl
-screen -d -m dmtcp_launch ./ocampl -I $HOLLIGHT_DIR -I $FLYSPECK_DIR -init build/boot.ml
+if [ -z "${HOLLIGHT_DIR}" ]; then
+    echo "set HOLLIGHT_DIR to the HOL Light to build against" >&2
+    exit 1
+fi
+export HOLLIGHT_DIR
+
+image="${1:-$(dirname "$FLYSPECK_DIR")/flyspeck-checkpoint}"
+sequence="${2:-build_sequence_main_statement}"
+
+# make-checkpoint.sh takes one OCaml phrase, and OCaml type checks a phrase
+# whole, so loading strictbuild.hl and then using the flyspeck_needs it defines
+# cannot be written as one.  They go in a file instead, which loadt runs a
+# phrase at a time.
+load_ml=$(mktemp --suffix=.ml)
+cat > "$load_ml" <<ML
+needs "${FLYSPECK_BUILD_DIR}/strictbuild.hl";;
+ignore (map flyspeck_needs Build.${sequence});;
+ML
+
+fifo=$(mktemp -u)
+mkfifo "$fifo"
+sleep 86400 > "$fifo" &
+fifo_holder=$!
+trap 'kill "$fifo_holder" 2>/dev/null; rm -f "$fifo" "$load_ml"' EXIT
+
+cd "$FLYSPECK_DIR"
+LINE_EDITOR=env "${HOLLIGHT_DIR}/make-checkpoint.sh" "$image" \
+    "loadt \"${load_ml}\"" \
+    < "$fifo"

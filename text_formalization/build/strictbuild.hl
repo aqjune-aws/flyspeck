@@ -34,11 +34,17 @@ let add_to_load_path path =
   if List.mem path !load_path then ()
   else load_path := path :: !load_path;;
 
-map add_to_load_path 
+map add_to_load_path
  [flyspeck_dir;
-  (Filename.concat flyspeck_dir "../formal_ineqs");
   (Filename.concat flyspeck_dir "../jHOLLight/")
  ];;
+
+(* Make a failed load raise rather than report and carry on.  Without this an
+   error inside a nested needs is printed and skipped, and the file doing the
+   nesting still counts as loaded, so a build can report success while part of
+   it never ran. *)
+
+use_file_raise_failure := true;;
 
 let process_to_string unixstring = 
   let p = Unix.open_process_in unixstring
@@ -164,6 +170,22 @@ let () =
 
 needs "Multivariate/flyspeck.ml";; (* load before state manager *)
 
+needs "update_database.ml";;
+
+(* Backwards compatibility with recent HOL Light versions.
+   These statements must come after Multivariate/flyspeck.ml.
+
+   "tendsto_real" used to be introduced with new_definition, which universally
+   quantifies over the arguments of the defined constant.  It is now derived
+   with prove from tendsto_real_def, so its statement has free variables
+   instead.  The ssreflect rewriting machinery (jHOLLight/caml/ssreflect.hl)
+   never instantiates variables that are free in the rewriting theorem, so
+   the unquantified form is useless to it (see tame/ssreflect/FNJLBXS.vhl). *)
+
+let tendsto_real =
+  if frees (concl tendsto_real) = [] then tendsto_real
+  else GEN_ALL tendsto_real;;
+
 loadt (flyspeckpath "general/state_manager.hl");;
 let reneeds s = loadt (flyspeckpath s);;
 let rflyspeck_needs = reneeds;;
@@ -232,8 +254,6 @@ let mk_goal(asl,w) = (asl,w);;
 let new_definition = Debug.verbose_1 new_definition;;
 let ABBREV_TAC = Debug.verbose_1 ABBREV_TAC;;
 let EXISTS_TAC = Debug.verbose_1 EXISTS_TAC;;
-
-let define = Debug.define;;
 
 (* This next one gets iterated in FIRST_ASSUM and creates multiple error messages *)
 (* let ISPECL = Debug.verbose_thm ISPECL;; *)
