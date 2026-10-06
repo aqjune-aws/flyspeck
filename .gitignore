@@ -12,5 +12,12 @@
 /azure/native_verifier
 /azure/native_verifier_raw.ml
 /azure/native_verifier_inlined.ml
+/azure/sharp_verifier
+/azure/sharp_verifier_raw.ml
+/azure/sharp_verifier_inlined.ml
+
+# Products of an azure verification run
 /azure/out/
-/azure/run-parallel.joblog
+/azure/out_sharp.txt
+/azure/run-parallel*.joblog
+/azure/pars-resume.txt

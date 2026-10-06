@@ -61,7 +61,7 @@ let verify_all () =
       
 
 let _ = 
-  let info = Printf.sprintf "\nHOL Light: %d\nFlyspeck: %d\nFormalIneq: %d\n\n"
-    Config.hol_version Config.flyspeck_version Config.formal_ineq_version in
+  let info = Printf.sprintf "\nHOL Light: %s\nFlyspeck: %d\n\n"
+    Config.hol_commit_hash Config.flyspeck_version in
   let _ = print_endline info in
     verify_all();;

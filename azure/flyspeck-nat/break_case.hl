@@ -1,6 +1,3 @@
-open Hol_core
-open Prove_by_refinement
-open Definitions
 
 let LET_THM = CONJ LET_DEF LET_END_DEF;;
 let pair_eq = prove(`!p. p = FST p, SND p`, REWRITE_TAC[]);;

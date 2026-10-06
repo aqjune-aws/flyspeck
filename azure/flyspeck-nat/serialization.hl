@@ -6,7 +6,6 @@
 (* Date: 2013-09-11                                                           *)
 (* ========================================================================== *)
 
-open Hol_core
 
 (* save theorems out to disk and reload *)
 
@@ -510,7 +509,7 @@ let des_prove_by_refinement (t,tacs) =
     let th = mk_ser_thm t in
     let _ = report "(!:)" in
       th
-  with Failure s -> (report_not_found t ;Prove_by_refinement.prove_by_refinement(t,tacs));;
+  with Failure s -> (report_not_found t ;prove_by_refinement(t,tacs));;
 
 
 (*

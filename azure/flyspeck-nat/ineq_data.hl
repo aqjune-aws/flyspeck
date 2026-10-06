@@ -36,7 +36,7 @@ let get_ineqs fname first last =
 	      failwith "bad input"
 	    else
 	      let str = Str.global_replace exp "-- #" str in
-	      let tm = Hol_core.parse_term str in
+	      let tm = parse_term str in
 		parse cs ((n, id, tm) :: acc)
 	  with Failure msg ->
 	    let _ = print_endline (Printf.sprintf "\nERROR %s: %s" id msg) in

@@ -1,5 +1,3 @@
-open Hol_core;;
-open Prove_by_refinement;;
 
 prioritize_real();;
 parse_as_infix ("::", (12, "right"));;
@@ -1068,7 +1066,7 @@ let sol0_EQ_sol_y = prove(`sol0 = sol_y (&2) (&2) (&2) (&2) (&2) (&2)`,
       CONV_TAC (REAL_RAT_REDUCE_CONV) THEN
       REWRITE_TAC[atn2] THEN
       SUBGOAL_THEN `&0 <= sqrt (&2048)` ASSUME_TAC THENL [
-	REWRITE_TAC[Vectors.SQRT_LE_0] THEN REAL_ARITH_TAC;
+	REWRITE_TAC[SQRT_LE_0] THEN REAL_ARITH_TAC;
 	ALL_TAC
       ] THEN
       SUBGOAL_THEN `abs (-- &16) < sqrt (&2048)` ASSUME_TAC THENL [
@@ -1078,18 +1076,18 @@ let sol0_EQ_sol_y = prove(`sol0 = sol_y (&2) (&2) (&2) (&2) (&2) (&2)`,
 	  ALL_TAC
 	] THEN
 	  REWRITE_TAC[REAL_LT_SQUARE_ABS] THEN
-	  ASM_SIMP_TAC[REAL_ARITH `&0 <= &2048`; Vectors.SQRT_POW_2] THEN
+	  ASM_SIMP_TAC[REAL_ARITH `&0 <= &2048`; SQRT_POW_2] THEN
 	  REAL_ARITH_TAC;
 	ALL_TAC
       ] THEN
 	ASM_REWRITE_TAC[] THEN
-	SIMP_TAC[REAL_ARITH `-- &1 < &1 / &3 /\ &1 / &3 < &1`; Transcendentals.ACS_ATN] THEN
+	SIMP_TAC[REAL_ARITH `-- &1 < &1 / &3 /\ &1 / &3 < &1`; ACS_ATN] THEN
 	SUBGOAL_THEN `sqrt (&2048) = &48 * sqrt(&8 / &9)` (fun th -> REWRITE_TAC[th]) THENL [
 	  REWRITE_TAC[REAL_ARITH `&2048 = &48 pow 2 * (&8 / &9)`] THEN
-	    REWRITE_TAC[Vectors.SQRT_MUL; Vectors.POW_2_SQRT_ABS] THEN REAL_ARITH_TAC;
+	    REWRITE_TAC[SQRT_MUL; POW_2_SQRT_ABS] THEN REAL_ARITH_TAC;
 	  ALL_TAC
 	] THEN
-	  REWRITE_TAC[real_div; REAL_MUL_LNEG; Transcendentals.ATN_NEG] THEN
+	  REWRITE_TAC[real_div; REAL_MUL_LNEG; ATN_NEG] THEN
 	  REWRITE_TAC[REAL_ARITH `&1 - (&1 * inv (&3)) pow 2 = &8 * inv(&9)`] THEN
 	  REWRITE_TAC[REAL_INV_MUL] THEN
 	  REWRITE_TAC[REAL_ARITH `&16 * inv(&48) * inv a = (&1 * inv(&3)) * inv a`] THEN
@@ -1182,10 +1180,10 @@ let arc_hhn_alt = prove(`arc_hhn = pi / &2 + atn((-- &5438 / &625) / sqrt(&53504
      REWRITE_TAC[atn2] THEN CONV_TAC REAL_RAT_REDUCE_CONV THEN
      SUBGOAL_THEN `(&5438 / &625 < sqrt(&53504 / &625))` ASSUME_TAC THENL [
        SUBGOAL_THEN `&5438 / &625 = sqrt ((&5438 / &625) pow 2)` (fun th -> ONCE_REWRITE_TAC[th]) THENL [
-	 REWRITE_TAC[Vectors.POW_2_SQRT_ABS] THEN REAL_ARITH_TAC;
+	 REWRITE_TAC[POW_2_SQRT_ABS] THEN REAL_ARITH_TAC;
 	 ALL_TAC
        ] THEN
-	 REWRITE_TAC[Vectors.SQRT_MONO_LT_EQ] THEN REAL_ARITH_TAC;
+	 REWRITE_TAC[SQRT_MONO_LT_EQ] THEN REAL_ARITH_TAC;
        ALL_TAC
      ] THEN
      ASM_REWRITE_TAC[]);;

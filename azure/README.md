@@ -28,7 +28,7 @@ Then:
 
     make HOLLIGHT_DIR=/path/to/hol-light
 
-The build folds the loads of `native_verifier.ml` into a single compilation unit
+The build folds the loads of `native_verifier.hl` into a single compilation unit
 with `hol.sh inline-load`, compiles that against `hol_lib.cmxa` with
 `hol.sh compile`, and links it with `ocamlfind`. The result, `./native_verifier`,
 needs only a system `libgmp` at run time.
@@ -67,9 +67,7 @@ needs about 1.2 GB, and a range of hard cases needs more, which is why
 `run-parallel` passes `--memfree` as well.
 
 Any further argument goes to GNU parallel.  Ranges that finish are recorded in
-`run-parallel.joblog`, so an interrupted run continues with
-
-    ./run-parallel 64 --resume
+`run-parallel.joblog`.
 
 ## Collecting the digests
 
@@ -97,25 +95,19 @@ holds 23242 entries against that file's 23237 cases:
 built from `out/` alone is five lines short, and a digest list regenerated from
 it would leave `mk_all_ineq.hl` unable to import them.
 
-`flyspeck-nat/sharp_theorems.hl` shows the exact equality that each of the five
-needs, and `flyspeck-nat/sharp_ineqs.hl` is a script of one block per case that
-verifies it and prints `Hash <name>: <md5>` as it loads.  Nothing builds those
-two files.  Covering them takes:
+`sharp_verifier.hl` covers them: it loads the prelude of `native_verifier.hl`,
+then `flyspeck-nat/sharp_theorems.hl`, which proves the exact equality each of
+the five needs, and `flyspeck-nat/sharp_ineqs.hl`, which verifies the cases and
+prints `Hash <name>: <md5>` as it loads.  All five run in one process, in about
+7 minutes:
 
-- dropping `open Sharp_theorems;;` from `sharp_ineqs.hl`.  It names the module
-  that separate compilation gave the file, and these files load into a single
-  scope, so there is nothing left for it to bring in.  Every other open there is
-  either a Formal_ineqs module or comes from `compat.ml` and the driver.
+    make sharp_verifier
+    ./sharp_verifier > out_sharp.txt
 
-- a second driver beside `native_verifier.ml` that loads the same prelude and
-  then those two files, with a Makefile target to inline-load, compile and link
-  it.
+Append its digests to the `hashes.txt` collected above, bringing that file to
+23242 lines:
 
-- one run of the result - five cases in a single process rather than a parallel
-  job - with its digests appended:
-
-      grep "Hash" out_sharp.txt | sed -e 's/.*Hash  //' -e 's/^.*,(/(/' \
-        >> hashes.txt
+    grep "Hash" out_sharp.txt | sed -e 's/^.*,(/(/' >> hashes.txt
 
 ## Comparing with the digests held in the project
 
@@ -134,6 +126,5 @@ this directory.
 
 ## Files that nothing builds
 
-- `flyspeck-nat/sharp_theorems.hl` and `flyspeck-nat/sharp_ineqs.hl`; see above.
-- `main_verifier.hl` and `config.ml`, which `native_verifier.ml` supersedes.
+- `main_verifier.hl` and `config.ml`, which `native_verifier.hl` supersedes.
 - `test_flyspeck.hl`, a performance test.

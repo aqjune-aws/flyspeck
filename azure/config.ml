@@ -1,6 +1,5 @@
-let hol_version = 193;;
+let hol_commit_hash = "cba9198db76e9dfb89cbd653df9412d01f65b22a";;
 let flyspeck_version = 3560;;
-let formal_ineq_version = 3658;; (* formal_ineqs version *)
 
 let start_time = Unix.gettimeofday();;
 

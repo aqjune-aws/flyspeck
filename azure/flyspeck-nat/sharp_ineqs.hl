@@ -1,14 +1,9 @@
-open Hol_core;;
-open Vectors;;
 open Misc_functions;;
 open Ssrbool;;
 open Multivariate_taylor;;
 open M_verifier_main;;
 open M_taylor;;
 open M_verifier;;
-open Definitions;;
-open Break_case;;
-open Sharp_theorems;;
 open Misc_vars;;
 
 let verify_flyspeck_ineq pp ineq_tm =
@@ -183,9 +178,11 @@ let apply_mono_th n j decr_flag diff2_th sub_th partial_th pass_th =
 
 
 let decimal48 = prove(`#4.0 = &4 /\ #8.0 = &8`, REAL_ARITH_TAC);;
-let float1 = Arith_float.FLOAT_TO_NUM_CONV (More_float.mk_float 1 0);;
-let float4 = Arith_float.FLOAT_TO_NUM_CONV (More_float.mk_float 4 0);;
-let float8 = Arith_float.FLOAT_TO_NUM_CONV (More_float.mk_float 8 0);;
+(* mk_float is Arith_float's; More_float reaches it by opening Arith_float and
+   does not re-export it. *)
+let float1 = Arith_float.FLOAT_TO_NUM_CONV (Arith_float.mk_float 1 0);;
+let float4 = Arith_float.FLOAT_TO_NUM_CONV (Arith_float.mk_float 4 0);;
+let float8 = Arith_float.FLOAT_TO_NUM_CONV (Arith_float.mk_float 8 0);;
 
 
 let prove_mono_case pp decr_flags case_tm =
@@ -288,7 +285,7 @@ let imp_th = REAL_ARITH (mk_imp (concl th1, rand (concl eq_th)));;
 let case_th = REWRITE_RULE[GSYM eq_th] (MP imp_th th1);;
 let _ = assert (concl case_th = case_tm);;
 
-let hash = Serialization.full_digest_thm case_th;;
+let hash = full_digest_thm case_th;;
 let str = Printf.sprintf "\nTheorem %s: %s\n\nHash %s: %s\n\n"
 	case_id (string_of_thm case_th) case_id hash;;
 let _ = print_endline str;;
@@ -383,7 +380,7 @@ let case_th = MP imp_th (CONJ case0_th (CONJ case1_th case2_th));;
 
 let _ = assert (concl case_th = case_tm);;
 
-let hash = Serialization.full_digest_thm case_th;;
+let hash = full_digest_thm case_th;;
 let str = Printf.sprintf "\nTheorem %s: %s\n\nHash %s: %s\n\n"
 	case_id (string_of_thm case_th) case_id hash;;
 let _ = print_endline str;;
@@ -469,7 +466,7 @@ let case_th = MP (REWRITE_RULE[GSYM cases_eq_th] (MP (MP (MP imp_th split1) spli
 
 let _ = assert (concl case_th = case_tm);;
 
-let hash = Serialization.full_digest_thm case_th;;
+let hash = full_digest_thm case_th;;
 let str = Printf.sprintf "\nTheorem %s: %s\n\nHash %s: %s\n\n"
 	case_id (string_of_thm case_th) case_id hash;;
 let _ = print_endline str;;
@@ -514,7 +511,7 @@ let case_th = MP imp_th (CONJ case0_th case1_th);;
 
 let _ = assert (concl case_th = case_tm);;
 
-let hash = Serialization.full_digest_thm case_th;;
+let hash = full_digest_thm case_th;;
 let str = Printf.sprintf "\nTheorem %s: %s\n\nHash %s: %s\n\n"
 	case_id (string_of_thm case_th) case_id hash;;
 let _ = print_endline str;;
@@ -539,7 +536,7 @@ let th1 = REWRITE_RULE[LET_RULE QZECFIC_WT0_CORNER; GSYM real_div] th;;
 let imp_th = REAL_ARITH (mk_imp (concl th1, rand (concl eq_th)));;
 let case_th = REWRITE_RULE[GSYM eq_th] (MP imp_th th1);;
 
-let hash = Serialization.full_digest_thm case_th;;
+let hash = full_digest_thm case_th;;
 let str = Printf.sprintf "\nTheorem %s: %s\n\nHash %s: %s\n\n"
 	case_id (string_of_thm case_th) case_id hash;;
 let _ = print_endline str;;

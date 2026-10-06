@@ -7,11 +7,6 @@
 
 (* show exact equality for the nonlinear inequalities that are sharp *)
 
-open Hol_core;;
-open Vectors;;
-open Transcendentals;;
-open Prove_by_refinement;;
-open Definitions;;
 open M_verifier_main;;
 prioritize_real();;
 
@@ -124,7 +119,7 @@ let TSKAJXY_RIBCYXU_SHARP = prove(`let x1 = &4 in
 
 
 let atn_sqrt8 = prove(`atn sqrt8 = &2 * atn (sqrt8 / &4)`,
-   REWRITE_TAC[SPEC `sqrt8` Taylor_atn.atn_half; Taylor_atn.halfatn] THEN
+   REWRITE_TAC[SPEC `sqrt8` Atn.atn_half; Atn.halfatn] THEN
      REPEAT AP_TERM_TAC THEN
      SUBGOAL_THEN `&1 + sqrt8 pow 2 = &3 pow 2` (fun th -> REWRITE_TAC[th]) THENL [
        SIMP_TAC[sqrt8; SQRT_POW_2; REAL_ARITH `&0 <= &8`] THEN

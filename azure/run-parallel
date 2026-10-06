@@ -1,17 +1,16 @@
 #!/bin/bash
 
-# Verify the inequalities of ineqs.txt, $1 of the case ranges in pars.txt at a
-# time.  Output lands under out/, one directory per range, which is the layout
-# the digest collection in README.md reads.
+# Verify the inequalities of ineqs.txt, $1 of the case ranges of $FLYSPECK_PARS
+# (pars.txt by default) at a time.  Output lands under out/, one directory per
+# range, which is the layout the digest collection in README.md reads.
 #
 # A process usually needs about 1.2 GB, and a range of hard cases needs more, so
 # --memfree holds a job back, and requeues the youngest, while free memory is
 # short.
 #
 # Any further argument goes to GNU parallel.  Ranges that finish are recorded in
-# run-parallel.joblog, so an interrupted run continues with
-#
-#     ./run-parallel 64 --resume
+# run-parallel.joblog.  To continue an interrupted run, see "Resuming an
+# interrupted run" in README.md.
 
 if [ $# -lt 1 ]; then
     echo "usage: $0 <jobs> [GNU parallel options...]" >&2
@@ -24,4 +23,4 @@ shift
 parallel --jobs "$jobs" --memfree 8G --joblog run-parallel.joblog \
 	 --results out --colsep ',' "$@" \
 	 env FLYSPECK_INEQS=ineqs.txt FLYSPECK_FIRST={1} FLYSPECK_LAST={2} \
-	 ./native_verifier :::: pars.txt
+	 ./native_verifier :::: "${FLYSPECK_PARS:-pars.txt}"

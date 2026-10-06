@@ -1,0 +1,45 @@
+(* ========================================================================= *)
+(* Verification of the five sharp Flyspeck nonlinear inequalities, and of the *)
+(* md5 digest of each resulting theorem, against the HOL Light in             *)
+(* HOLLIGHT_DIR.                                                             *)
+(*                                                                          *)
+(* These five hold with equality somewhere on their domain, so the interval   *)
+(* arithmetic that settles the other 23237 cannot settle them, and they are   *)
+(* absent from ineqs.txt.  flyspeck-nat/sharp_theorems.hl proves the exact    *)
+(* equality each one needs, and flyspeck-nat/sharp_ineqs.hl verifies the      *)
+(* cases, one block per case, printing one line per case:                     *)
+(*                                                                          *)
+(*   Hash <n>,(<name>): <md5>                                                *)
+(*                                                                          *)
+(* All five run in a single process, taking nothing from the environment.      *)
+(*                                                                          *)
+(* Compiled: "make sharp_verifier", which inlines the loads with              *)
+(* "hol.sh inline-load" and then compiles and links the result.  Only literal *)
+(* needs/loadt statements on a line of their own are inlined, so the loads     *)
+(* below are written that way.                                                *)
+(* ========================================================================= *)
+
+(* The prelude is that of native_verifier.hl, so that the two drivers give
+   their theorems the same definitional history and hence comparable digests. *)
+
+needs "Formal_ineqs/arith_options.hl";;
+Arith_options.base := 200;;
+needs "Formal_ineqs/verifier/m_verifier_main.hl";;
+needs "Formal_ineqs/verifier_options.hl";;
+Verifier_options.info_print_level := 1;;
+
+(* The flyspeck-nat sources load into this one flat scope, in dependency
+   order, and reach each other's names unqualified. *)
+
+loadt "flyspeck-nat/prove_by_refinement.hl";;
+loadt "flyspeck-nat/definitions.hl";;
+loadt "flyspeck-nat/serialization.hl";;
+loadt "flyspeck-nat/break_case.hl";;
+loadt "flyspeck-nat/hminus.hl";;
+loadt "flyspeck-nat/sharp_theorems.hl";;
+
+open M_verifier_main;;
+
+loadt "flyspeck-nat/sharp_ineqs.hl";;
+
+print_endline "Verification of the sharp inequalities finished";;
