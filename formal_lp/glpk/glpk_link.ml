@@ -212,8 +212,21 @@ let solve com model glpk_outfile varname ampl_of_bb bb =
     (inp2,inp);;
 
 let solve_branch_f model glpk_outfile varname ampl_of_bb bb = 
-  let com = sprintf "glpsol -m %s -d /dev/stdin | tee %s | grep '^%s' | sed 's/.val//' | sed 's/%s = //' "  model glpk_outfile varname varname in 
-  solve com model glpk_outfile varname ampl_of_bb bb;;
+  let com opts = sprintf "glpsol -m %s -d /dev/stdin %s | tee %s | grep '^%s' | sed 's/.val//' | sed 's/%s = //' "  model opts glpk_outfile varname varname in 
+  let attempt opts = solve (com opts) model glpk_outfile varname ampl_of_bb bb in
+  let settled (no_feasible, value) = no_feasible <> [] || length value = 1 in
+  (* The simplex can perturb the LP to get past instability and then fail to
+     recover a basis, saying "LP HAS NO PRIMAL FEASIBLE SOLUTION" for an LP
+     that has one and leaving no value to read.  The dual simplex gets most of
+     those and the exact one, which is rational and so cannot stumble, the
+     rest; it is a hundred times slower, hence last.  A branch the floating
+     point simplex settles is not solved again, so it keeps its own basis. *)
+  let rec first = function
+    | [] -> failwith "solve_branch_f: glpsol gave neither a solution nor an infeasibility"
+    | opts :: rest ->
+	let r = attempt opts in
+	  if settled r then r else first rest in
+    first [""; "--dual"; "--exact"];;
 
 let solve_dual_f model glpk_outfile varname ampl_of_bb bb = 
   let com = sprintf "glpsol -m %s -d /dev/stdin --simplex --exact --dual -w /tmp/dual.out --output /tmp/output.out | tee %s | grep '^%s' | sed 's/.val//' | sed 's/%s = //' "  model glpk_outfile varname varname in 

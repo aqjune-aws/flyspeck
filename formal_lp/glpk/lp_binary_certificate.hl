@@ -6,9 +6,9 @@ open Lp_certificate;;
 
 let read_string in_channel =
   let n = input_byte in_channel in
-  let str = String.create n in
+  let str = Bytes.create n in
   let _ = really_input in_channel str 0 n in
-    str;;
+    Bytes.to_string str;;
 
 let read_int16 in_channel =
   let b1 = input_byte in_channel in

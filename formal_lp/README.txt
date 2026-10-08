@@ -5,6 +5,57 @@ a path to the "text_formalization" directory of the Flyspeck
 project.
 
 -----------------------------------------------------
+0. What is in each directory
+-----------------------------------------------------
+
+The work is in two halves.  glpk/ and LP-HL/ solve the linear programs and
+write a certificate for each one; nothing there is part of the proof.
+hypermap/, ineqs/ and more_arith/ are the formal half, which reads those
+certificates and proves the corresponding theorem in HOL Light.
+
+glpk/
+  The GLPK side.  head.mod, body.mod and tail.mod are the model, from which
+  make_models assembles graph_all.mod and model2.mod; those two are generated
+  and not kept in the repository.  glpk_link.ml runs glpsol and reads back what
+  it says, lpproc.ml and hard_lp.ml drive the branch and bound over a
+  hypermap, and sphere.ml holds the constants they need.  build_certificates.hl
+  turns one branch into a certificate and build_main.hl is the entry point,
+  Lp_build_main.build_all.  The three .sed scripts rewrite a model into the
+  slack form used when a branch is infeasible.  lp_binary_certificate.hl reads
+  what LP-HL.exe writes.  binary/ holds the certificates themselves, tmp/ is
+  the working directory of a run and keeps 000.txt, which LP-HL.exe requires,
+  and ex1/ and ex2/ are small examples.
+
+LP-HL/
+  A C# program, LP-HL.exe, which reads a model and the solution glpsol wrote
+  for it and emits the binary certificate that binary/ is made of.  LP-HL.sln
+  and LP-HL/*.cs are its sources, and LP-HL/bin/Release/LP-HL.exe the build
+  that build_certificates.hl runs under mono.
+
+hypermap/
+  The formal side.  verify_all.hl is the entry point, Verify_all.verify_all.
+  main/ reads a certificate (lp_certificate.hl) and proves the theorem it
+  stands for (prove_flyspeck_lp.hl), with its tests.  ineqs/ defines the
+  lp_ineqs and lp_main_estimate constants and proves what is claimed of them.
+  computations/ evaluates the list and hypermap functions the proofs apply to
+  explicit hypermaps.  ssreflect/ holds the hypermap theory, each
+  *-compiled.hl generated from the *.vhl beside it.  arith_link.hl sets the
+  arithmetic up from the Formal_ineqs of the HOL Light being built against.
+
+ineqs/
+  Interval arithmetic for the constants the linear programs quote
+  (constants_approx.hl) and the delta inequality (delta_ineq.hl).
+
+more_arith/
+  The arithmetic the formal half needs over and above HOL Light's: integers
+  (arith_int.hl), linear forms (lin_f.hl), and proving a linear program from
+  its certificate (prove_lp.hl).
+
+lp_example/
+  One linear program carried through the whole process by hand, useful for
+  seeing what the files above pass to each other.
+
+-----------------------------------------------------
 I. Construction of linear program certificates
 -----------------------------------------------------
 
@@ -13,7 +64,11 @@ are in the repository at
 flyspeck_dir/../formal_lp/glpk/binary
 
 All certificate files are binary files which contain serialized
-OCaml data structures. These files were prepared with OCaml 4.01.
+OCaml data structures, and they hold zarith integers, which are
+custom blocks. OCaml 5 refuses to read a custom block written by
+OCaml 4.08 or earlier, so the certificates have to have been
+written by a compiler no older than that; the ones here were
+written by OCaml 5.4.
 
 All certificates can be reconstructed manually in the following way.
 
@@ -51,6 +106,10 @@ It is also possible to build either easy linear program certificates or hard lin
 program certificates. The corresponding commands are
 Lp_build_main.build_all_easy 1000;;
 Lp_build_main.build_all_hard 1;;
+
+The run is serial and the hard cases take hours. glpk/README.md says what a
+process needs of its own to run several of them at once, and comes with a
+script that merges the output directories afterwards.
 
 -----------------------------------------------------
 II. Formal verification of Flyspeck linear programs

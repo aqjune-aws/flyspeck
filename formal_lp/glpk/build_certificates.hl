@@ -124,6 +124,26 @@ let clean_out_dir =
 
 (************************************)	
 
+(* The "s" record of a glpsol solution file is
+       s bas <rows> <columns> <primal status> <dual status> <objective>
+   and a basis is optimal exactly when both statuses are "f".  LP-HL.exe reads
+   the duals, so anything less than optimal would give a certificate that does
+   not prove the bound it claims. *)
+let solution_is_optimal fname =
+  let ic = open_in fname in
+  let rec scan () =
+    match (try Some (input_line ic) with End_of_file -> None) with
+      | None -> false
+      | Some line ->
+	  if String.length line > 1 && line.[0] = 's' then
+	    (match Str.split (Str.regexp "[ \t]+") line with
+	       | _ :: _ :: _ :: _ :: "f" :: "f" :: _ -> true
+	       | _ -> false)
+	  else scan () in
+  let optimal = scan () in
+  let _ = close_in ic in
+    optimal;;
+
 (* Builds a terminal case from the given hypermap *)
 let build_terminal_case =
   let create_infeasible_solution out_name =
@@ -144,9 +164,23 @@ let build_terminal_case =
       let _ = save_info !tmp_dir out_name infeasible hyp_list bb in
       let data_file = sprintf "%s_pars.txt" out_name in
 	(* Create .lp file and solve a feasible problem *)
-      let solve_com = sprintf "glpsol -m %s -d %s -w %s.txt --wcpxlp %s.lp > /dev/null"  !model2_path data_file out_name out_name in
-      let result = run_command !tmp_dir solve_com in
-      let _ = result = 0 || failwith error_glpsol in
+      let solve_com opts = sprintf "glpsol %s -m %s -d %s -w %s.txt --wcpxlp %s.lp > /dev/null"
+	opts !model2_path data_file out_name out_name in
+      (* An infeasible case has no optimal basis to reach; its certificate comes
+	 from create_infeasible_solution below, and all that is wanted here is
+	 the .lp file that the slack construction rewrites.  Otherwise the duals
+	 of this basis are the certificate, so it has to be optimal: the
+	 floating point simplex sometimes stops at a basis it calls neither
+	 primal nor dual feasible.  The dual simplex gets most of those and the
+	 exact one, being rational, the rest; it is far slower, hence last. *)
+      let rec solve_until_optimal = function
+	| [] -> failwith (sprintf "build_terminal_case: no optimal basis for %s" bb.hypermap_id)
+	| opts :: rest ->
+	    let result = run_command !tmp_dir (solve_com opts) in
+	    let _ = result = 0 || failwith error_glpsol in
+	      if infeasible || solution_is_optimal (sprintf "%s/%s.txt" !tmp_dir out_name)
+	      then () else solve_until_optimal rest in
+      let _ = solve_until_optimal [""; "--dual"; "--exact"] in
 	(* Solve an infeasible problem *)
       let result = if infeasible then create_infeasible_solution out_name else 0 in
       let _ = result = 0 || failwith error_glpsol in

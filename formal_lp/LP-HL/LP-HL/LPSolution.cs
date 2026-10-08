@@ -54,37 +54,55 @@ namespace LP_HL
 
 
         /// <summary>
-        /// Reads k third values from the input stream
+        /// Reads the dual value out of one row ("i") or column ("j") record of a
+        /// glpsol solution file.  A record is
+        ///     i &lt;number&gt; &lt;status&gt; &lt;primal&gt; &lt;dual&gt;
+        /// except that a basic variable carries no dual, so a record of four
+        /// fields has a dual of zero.
         /// </summary>
-        /// <param name="k"></param>
-        /// <returns></returns>
-        private static List<LpNumber> ReadThirdValue(StreamReader r, int k, int precision)
+        private static LpNumber ReadDual(StreamReader r, char kind, int precision)
+        {
+            string str = r.ReadLine();
+            while (str != null && (str.Length == 0 || str[0] == 'c'))
+                str = r.ReadLine();
+
+            if (str == null)
+                throw new Exception("Unexpected end of solution file");
+            if (str[0] != kind)
+                throw new Exception("Expected a '" + kind + "' record, got: " + str);
+
+            string[] els = str.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (els.Length < 4)
+                throw new Exception("Malformed record: " + str);
+
+            double dual = (els.Length >= 5) ? double.Parse(els[4]) : 0.0;
+            return new LpNumber(dual, precision);
+        }
+
+
+        private static List<LpNumber> ReadDuals(StreamReader r, char kind, int k, int precision)
         {
             List<LpNumber> result = new List<LpNumber>();
-
             for (int i = 0; i < k; i++)
-            {
-                string str = r.ReadLine();
-                if (str == null)
-                    throw new Exception("Unexpected end of file");
-
-                string[] els = str.Split(' ');
-                if (els.Length != 3)
-                    throw new Exception("Triples are expected: " + str);
-
-                LpNumber val = new LpNumber(double.Parse(els[2]), precision);
-                result.Add(val);
-            }
-
+                result.Add(ReadDual(r, kind, precision));
             return result;
         }
 
 
         /// <summary>
-        /// Loads solutions from a stream (a file)
+        /// Reads a solution written by "glpsol -w".  That file is
+        ///
+        ///     c &lt;comments&gt;
+        ///     s bas &lt;rows&gt; &lt;cols&gt; &lt;prim status&gt; &lt;dual status&gt; &lt;objective&gt;
+        ///     i &lt;number&gt; &lt;status&gt; &lt;primal&gt; &lt;dual&gt;      one per row
+        ///     j &lt;number&gt; &lt;status&gt; &lt;primal&gt; &lt;dual&gt;      one per column
+        ///     e o f
+        ///
+        /// For a feasible problem the first row is the objective and is not a
+        /// constraint.  For an infeasible one the objective row is absent and the
+        /// first "rows" columns are the slack variables that
+        /// create_infeasible_solution added, so neither is counted.
         /// </summary>
-        /// <param name="r"></param>
-        /// <returns></returns>
         public static LPSolution LoadSolution(StreamReader r, int precision, LpNumber upperBound, bool infeasible)
         {
             LPSolution sol = new LPSolution();
@@ -96,15 +114,19 @@ namespace LP_HL
             }
 
             string str = r.ReadLine();
-            if (str == null)
-                throw new Exception("Two numbers are expected on the first line");
+            while (str != null && (str.Length == 0 || str[0] == 'c'))
+                str = r.ReadLine();
 
-            string[] els = str.Split(' ');
-            if (els.Length != 2)
-                throw new Exception("Two numbers are expected on the first line");
+            if (str == null || str[0] != 's')
+                throw new Exception("A solution file must begin with an 's' record");
 
-            int nc = int.Parse(els[0]);
-            int nv = int.Parse(els[1]);
+            string[] els = str.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (els.Length != 7)
+                throw new Exception("Seven fields are expected on the 's' record: " + str);
+
+            int nc = int.Parse(els[2]);
+            int nv = int.Parse(els[3]);
+            sol.Optimal = new LpNumber(double.Parse(els[6]), precision);
 
             if (infeasible)
             {
@@ -119,27 +141,23 @@ namespace LP_HL
                 sol.NumberOfVariables = nv;
             }
 
-            // Optimal
-            var vals = ReadThirdValue(r, 1, precision);
-            sol.Optimal = vals[0];
-
             if (!infeasible)
             {
-                // Skip one line (the objective function)
-                ReadThirdValue(r, 1, precision);
+                // Skip the objective row
+                ReadDual(r, 'i', precision);
             }
 
             // Constraints
-            sol.ConstraintMarginals = ReadThirdValue(r, sol.NumberOfConstraints, precision);
+            sol.ConstraintMarginals = ReadDuals(r, 'i', sol.NumberOfConstraints, precision);
 
             if (infeasible)
             {
                 // Skip slack variables
-                ReadThirdValue(r, nc, precision);
+                ReadDuals(r, 'j', nc, precision);
             }
 
             // Bounds
-            sol.VariableMarginals = ReadThirdValue(r, sol.NumberOfVariables, precision);
+            sol.VariableMarginals = ReadDuals(r, 'j', sol.NumberOfVariables, precision);
 
             return sol;
         }

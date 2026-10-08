@@ -52,11 +52,12 @@ The directory structure for the flyspeck project is as follows.
   The files here are solely to aid in 
   the translation of the statement of the theorem into HOL Light.
 
-[`formal_ineqs`](formal_ineqs)
-  Files related to the formal verification of nonlinear inequalities.
-
 [`formal_lp`](formal_lp)
   Files related to the formal verification on linear programs.
+  Building the certificates needs GLPK and a C# program run under mono, but the
+  certificates themselves are kept in
+  [`formal_lp/glpk/binary`](formal_lp/glpk/binary), so verifying the linear
+  programs needs neither.
 
 [`informal_code`](informal_code)
   Code used for the informal computer programs used in the proof of the Kepler conjecture.
