@@ -65,34 +65,24 @@ flyspeck_dir/../formal_lp/glpk/binary
 
 All certificate files are binary files which contain serialized
 OCaml data structures, and they hold zarith integers, which are
-custom blocks. OCaml 5 refuses to read a custom block written by
-OCaml 4.08 or earlier, so the certificates have to have been
-written by a compiler no older than that; the ones here were
-written by OCaml 5.4.
+custom blocks.
 
 All certificates can be reconstructed manually in the following way.
 
 0) Install glpk (http://www.gnu.org/software/glpk/) and
 mono (http://www.mono-project.com/Main_Page).
 
-1) Make sure that OCaml supports dynamic loading of compiled libraries or
-create a custom toplevel with the command
-ocamlmktop unix.cma nums.cma str.cma -o my_ocaml
-
-2) Make sure that the environment has the FLYSPECK_DIR variable.
+1) Make sure that the environment has the FLYSPECK_DIR variable.
 This variable must contain a path to the "text_formalization" directory
 of the Flyspeck project.
 
-3) Start OCaml and load HOL Light (#use "hol.ml"). No other HOL Light
-libraries are required.
+2) Start HOL Light with its hol.sh.
 
-4) Load the file build_main.hl:
-needs "flyspeck_dir/../formal_lp/glpk/build_main.hl";;
+3) Load the file build_main.hl:
+needs (Filename.concat (Sys.getenv "FLYSPECK_DIR")
+         "../formal_lp/glpk/build_main.hl");;
 
-Here, replace flyspeck_dir with an absolute path to the "text_formalization"
-directory of the Flyspeck project.
-
-5) Build all linear program certificates with the command
+4) Build all linear program certificates with the command
 Lp_build_main.build_all 1000;;
 
 Here, 1000 is a parameter which specifies how many terminal cases will be
@@ -101,6 +91,11 @@ All certificates will be saved in
 flyspeck_dir/../formal_lp/glpk/binary
 Certificates of easy linear programs will be saved in files with the prefix "easy".
 Certificates of hard linear programs will be saved in files with the prefix "hard".
+
+A rebuild writes .dat files, and one certificate is kept compressed because of
+its size, so delete that .tar.gz once its .dat is in place: Verify_all reads
+every file in binary/ whose name begins with "easy" or "hard", and would
+otherwise read the certificate in both forms.
 
 It is also possible to build either easy linear program certificates or hard linear
 program certificates. The corresponding commands are
@@ -118,12 +113,16 @@ II. Formal verification of Flyspeck linear programs
 0) Make sure that the directory flyspeck_dir/../formal_lp/glpk/binary
 contains all certificate files.
 
-1) Start OCaml and load the Flyspeck project.
+1) Start OCaml and load the Flyspeck project; ../load_flyspeck.ml is the entry
+point for that.
 
 2) needs "../formal_lp/hypermap/verify_all.hl";;
 
 3) let result = Verify_all.verify_all [] None;;
-It takes about 15 hours to verify all linear programs (on Mac mini 2GHz, 2GB).
+Verifying all of them took three hours on one core of an EC2 r7i instance.
+tame/linear_programming_results.hl does the same verification as a step of
+the project build, and assembles the result into the theorem
+`linear_programming_results`.
 
 Commands
 let result_easy = Verify_all.verify_easy [] None;;

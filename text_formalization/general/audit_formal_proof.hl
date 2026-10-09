@@ -54,20 +54,21 @@ let chk_kepler_conjecture_def = chk_thm
   );;
 
 
-(* Strong version of the main statement.
-   This is commented out, because it takes about a day to load.
-   See the file general/the_kepler_conjecture.hl. *)
+(* Strong version of the main statement, from general/the_kepler_conjecture.hl.
 
-(*
+   This file is loaded before that one, so the module it names does not exist
+   yet and the check cannot run here.  It belongs after a build that reaches
+   that file: Build.build_sequence_nonserial is the whole project apart from
+   the imported nonlinear inequalities, and Build.build_sequence_full includes
+   those as well.  Either way, run
 
-do_build(Build.build_sequence_nonserial);;
-    
 let strong_main_statement = (warn_axiom(); Audit_formal_proof.chk_thm
   (The_kepler_conjecture.tame_nonlinear_imp_kepler_conjecture,
-  `import_tame_classification /\ the_nonlinear_inequalities 
+  `import_tame_classification /\ the_nonlinear_inequalities
   ==> the_kepler_conjecture`));;
 
-*)
+   What the antecedent leaves assumed is the classification of tame hypermaps,
+   which is verified in Isabelle rather than here. *)
 
 (* Article Section 4.2 The blueprint outline.
   The paper mentions the following reduction: *)
@@ -264,21 +265,20 @@ text_formalization/general/theorem_nonlinear_digest.hl.
 file: text_formalization/nonlinear/mk_all_ineq.hl.
 
 This is the last file loaded in the project text_formalization/build/build.hl.
-It installs the serialization axiom to generate the theorem.
+It installs the serialization axiom to generate the theorem, so warn_axiom
+reports a fourth axiom beside the three of HOL Light.
 
-We leave it as a comment, because it is slow to load.
- *)
-
-(*
-To get `the_nonlinear_inequalities` via imported theorems:
-
-  do_build(Build.build_sequence_the_nonlinear_inequalities);;
+That file is loaded after this one, so as with the strong main statement above
+the check belongs after a build that reaches it:
+Build.build_sequence_the_nonlinear_inequalities is the weak main statement and
+the import, and Build.build_sequence_full is the whole project.  Either way,
+run
 
 let chk_nonlinear_inequalities = (warn_axiom(); Audit_formal_proof.chk_thm
   (Mk_all_ineq.the_nonlinear_inequalities,
   `the_nonlinear_inequalities`));;
 
-*)
+ *)
 
 
 (* Article section 6. The definition of the_nonlinear_inequalities

@@ -9,12 +9,12 @@
 (* ========================================================================== *)
 
 
-(* 
-   Build file for Flyspeck project.
-   ocaml needs to be built with Unix.
-   ocamlmktop unix.cma str.cma nums.cma -o ocampl
+(*
+   Build file for Flyspeck project.  It loads unix and str itself, just below,
+   and wants nothing of the toolchain beyond what HOL Light's hol.sh sets up.
 
-   See ocamlinit_hol_light.ml for scripts showing how this file is used.
+   load_flyspeck.ml, at the top of the project, is the entry point, and shows
+   how this file is used.
 
 *)
 

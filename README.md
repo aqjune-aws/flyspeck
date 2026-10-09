@@ -12,7 +12,8 @@ The purpose of the flyspeck project was to produce a formal proof of the Kepler 
 
 ## Installation
 
-See a step by step [installation guide](INSTALL.md).
+See a step by step [installation guide](INSTALL.md), which also says how to run
+[`load_flyspeck.ml`](load_flyspeck.ml), the entry point for loading the proof.
 
 ## Resources
 
@@ -24,17 +25,13 @@ The formalization project is based on the book [Dense Sphere Packings](downloads
 
 This project is distributed under the [MIT Licence](http://opensource.org/licenses/mit-license.php).
 
-## Thanks
-
-This project was supported by NSF through grant 0503447 on the "Formal Foundations of Discrete Geometry" and grant 0804189 on the "Formal Proof of the Kepler Conjecture", the Benter Foundation, Microsoft Azure Research, the University of Pittsburgh, Radboud Research Facilities, Institute of Math (VAST), and VIASM.
-
 ## Directory structure 
 
 The main proof scripts are in the subdirectory 
 [`text_formalization`](text_formalization).
 The primary files used to build the project are in 
 [text_formalization/build](text_formalization/build).
-See especially [`text_formalization/build/ocamlinit_hol_light.ml`](text_formalization/build/ocamlinit_hol_light.ml)
+See especially [`load_flyspeck.ml`](load_flyspeck.ml) which loads the project.
 
 The directory structure for the flyspeck project is as follows.
 
@@ -64,13 +61,8 @@ The directory structure for the flyspeck project is as follows.
   These files are not required for the flyspeck project.
   
 [`jHOLLight`](jHOLLight)
-  Code for the java front end that is used for Solovyev's SSReflect mode for HOL Light.
-
-[`kepler_tex`](kepler_tex)
-  Latex source files for the book "Dense Sphere Packings"
-
-[`legacy`](legacy)
-  This directory contains dead code that is no longer of any use. Ignore this directory.
+  Solovyev's SSReflect mode for HOL Light, implemented in `caml` and `Examples`,
+  which the proof loads; and the java front end for it.
 
 [`text_formalization`](text_formalization)
   This is the main directory of the project. It contains the files for the formalization of the
@@ -80,7 +72,9 @@ The directory structure for the flyspeck project is as follows.
 
   [`text_formalization/build`](text_formalization/build) directory contains files related to building the project.
 
-[`usr`](usr)
-  These files are not part of the flyspeck project.
-  It mostly contains an assortment of latex files for articles written by Hales.
-  
+## Thanks
+
+The many people who contributed to the project are credited at the end of
+[`text_formalization/general/announce.txt`](text_formalization/general/announce.txt).
+
+This project was supported by NSF through grant 0503447 on the "Formal Foundations of Discrete Geometry" and grant 0804189 on the "Formal Proof of the Kepler Conjecture", the Benter Foundation, Microsoft Azure Research, the University of Pittsburgh, Radboud Research Facilities, Institute of Math (VAST), and VIASM.

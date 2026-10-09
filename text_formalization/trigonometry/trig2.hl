@@ -715,14 +715,6 @@ let v12 = dist (v1,v2) pow 2 in
 &0 < ups_x v01 v02 v12 `;;
 *)
 
-(* Jason have proved the following lemma in the first half
-of this file *)
-
-(*
-let acs_atn2_t = `!y. (-- &1 <= y /\ y <= &1) ==> (acs y = pi/(&2) - atn2(sqrt(&1 - y pow 2),y))`;;
-let acs_atn2 = new_axiom acs_atn2_t;;
-*)
-
 let REAL_LT_DIV_0 = prove(` ! a b. &0 < b ==> ( &0 < a / b <=> &0 < a ) `,
 REPEAT STRIP_TAC THEN EQ_TAC THENL
 [ASSUME_TAC (UNDISCH (SPEC `b:real` REAL_LT_IMP_NZ)) THEN
@@ -1010,12 +1002,7 @@ NHANH (NOT_IDEN_IMP_ABS_LE) THEN REWRITE_TAC[arcV; REAL_ABS_BOUNDS]
 THEN SIMP_TAC[ACS_BOUNDS]);;
 
 
-(* This lemma in Multivariate/transc.ml
-let COS_MONO_LT_EQ = new_axiom
-`!x y. &0 <= x /\ x <= pi /\ &0 <= y /\ y <= pi
-==> (cos(x) < cos(y) <=> y < x)`;;
-*)
-
+(* COS_MONO_LT_EQ below is HOL Light's, from Multivariate/transcendentals.ml *)
 
 let COS_MONOPOLY = prove(
 ` ! a b. &0 <= a /\ a <= pi /\ &0 <= b /\ b <= pi ==>

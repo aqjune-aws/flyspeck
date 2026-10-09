@@ -3,7 +3,7 @@ This directory contains general files related to the Flyspeck project.
 Final conclusions of the project:
 announce.txt: The announcement of the completion of the project, August 10, 2014.
 audit_formal_proof.hl: Listing of theorems referenced in publication
-   "A formal proof of the Kepler conjecture"
+   "A formal proof of the Kepler conjecture".
 kepler_spec.hl: Key definitions used to express the statement of Kepler conjecture.
 the_kepler_conjecture.hl: Statement and proof of the main statement (strong form).
 the_main_statement.hl: Statement and proof of the main statement (weak form)
@@ -12,15 +12,20 @@ Tactics:
 tactics.hl
 hales_tactic.hl
 truong_tactic.hl
-vuhkacky_tactics.hl: files containing team-member-specific tactics.
+vukhacky_tactics.hl: files containing team-member-specific tactics.
 
 Serialization:
 serialization.hl: export and import of theorems.
-theorem_*_digest.hl: list of hash codes of import/export theorems.
+theorem_digest.hl, theorem_nonlinear_digest.hl: lists of hash codes of
+   import/export theorems.  theorem_digest_empty.hl is a stand-in with no
+   hashes in it.
 
 HOL Light:
 hol_pervasives: Copy of some key HOL Light values that get renamed or have clashing names.
 lib.hl: Copy of HOL Light's lib.ml, wrapped in a module.
+hol-library.hl: values HOL Light has since renamed or dropped.
+flyspeck_eval.hl, flyspeck_eval_4.14.hl: the toplevel eval that flyspeck_lib.hl
+   picks between according to the OCaml version.
 
 Debugging tools:
 debug.hl: verbose error messages for exceptions.
@@ -28,10 +33,6 @@ flyspeck_lib.hl: basic OCaml functions to do read/write operations, etc.
 package_constant.hl: (not used) Module for naming constants with a local scope.
 parser_verbose.hl: parser with detailed error messages when exceptions are thrown.
 print_types.hl: functions to display type information about types, terms, and theorems.
-
-Search:
-update_database_310.ml
-update_database_400.ml:  used for searching project for theorems.
 
 Basic tools:
 prove_by_refinement.hl: The "prove_by_refinement" style of tactic proof.

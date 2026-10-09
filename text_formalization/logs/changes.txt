@@ -148,3 +148,16 @@ Sat Oct 10 09:36:26 EDT 2015
    $ git config --global push.default simple
    $ git push origin master
    
+
+Fri Oct  9 2026
+   The project builds against HOL Light cba9198db76e9dfb89cbd653df9412d01f65b22a
+   on OCaml 5.4.  The linear programming certificates in formal_lp/glpk/binary
+   were rebuilt, since OCaml 5 refuses to read a Marshal custom block written
+   by OCaml 4.08 or earlier and so could not read the ones of 2014; glpsol 5.0
+   had also changed its solution format, and where its floating point simplex
+   returns no basis the build now falls back to the dual and then the exact
+   one.  Loading Build.build_sequence_full verifies all 19715 linear programs
+   and gives |- import_tame_classification ==> the_kepler_conjecture, resting
+   on the deserialization axiom beside the three of HOL Light.  The one
+   certificate above a hundred megabytes is kept as hard_2.tar.gz, as hard_7
+   once was.
